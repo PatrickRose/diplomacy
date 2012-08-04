@@ -62,9 +62,17 @@ function show_turn_results($turn_number, $con)
     {
         die("Error on line 56: " . mysql_error($con));
     }
-    $array = mysql_fetch_array($result);
+    if (mysql_num_rows($result) == 0)
+    {
+        $summary = "<p>No summary for this turn yet</p>";
+    }
+    else
+    {
+        $array = mysql_fetch_array($result);
+        $summary = $array['description'];
+    }
     echo "<a name=\"turn" . $turn_number ."\" /><h1>Turn $turn_number</h1>
-	<p>" . $array['description'] . "</p>
+	<p>" . str_ireplace("\n", "</p>\n<p>", strip_tags($summary)) . "</p>
 	<p>The state of the board at the beginning of turn $turn_number is:<p>
 	<img src=\"https://dl.dropbox.com/u/2827522/Diplomacy/Turn" . $turn_number . ".png\" alt=\"Turn $turn_number Map\" />
           <ul><strong>KEY:</strong>
@@ -127,6 +135,7 @@ function show_turn_results($turn_number, $con)
         }
     }
     show_turn_results($turn_number - 1, $con);
+    return TRUE;
 }
 
 function set_players($con)
