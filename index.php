@@ -56,7 +56,7 @@ function show_turn_results($turn_number, $con)
     {
         return true;
     }
-    $query = "SELECT description FROM summary WHERE turnNum = $turn_number";
+    $query = "SELECT description FROM summary WHERE id = $turn_number";
     $result = mysql_query($query, $con);
     if (!$result)
     {
@@ -75,17 +75,17 @@ function show_turn_results($turn_number, $con)
 	<p>" . str_ireplace("\n", "</p>\n<p>", strip_tags($summary)) . "</p>
 	<p>The state of the board at the beginning of turn $turn_number is:<p>
 	<img src=\"https://dl.dropbox.com/u/2827522/Diplomacy/Turn" . $turn_number . ".png\" alt=\"Turn $turn_number Map\" />
-          <ul><strong>KEY:</strong>
+    <ul><strong>KEY:</strong>
 	    <li>Pink: England</li>
 	    <li>Blue: France</li>
 	    <li>Black: Germany</li>
-            <li>Green: Italy</li>
-            <li>Brown: Hungary</li>
-            <li>Yellow: Turkey</li>
-            <li>Purple: Russia</li>
-            <li>Square: Soldier</li>
-            <li>Circle: Ship</li>
-          </ul>";
+        <li>Green: Italy</li>
+        <li>Brown: Hungary</li>
+        <li>Yellow: Turkey</li>
+        <li>Purple: Russia</li>
+        <li>Square: Soldier</li>
+        <li>Circle: Ship</li>
+    </ul>\n";
     $countries = array(
         "England",
         "France",
@@ -107,17 +107,17 @@ function show_turn_results($turn_number, $con)
             die("Query failed: " . mysql_error($con));
         }
         $army_count = mysql_num_rows($result);
-        echo "<ul><strong>" . strtoupper($country) . " - $army_count armies ($pip_count pips controlled)</strong>";
+        echo "<ul><strong>" . strtoupper($country) . " - $army_count armies ($pip_count pips controlled)</strong>\n";
         while ($row = mysql_fetch_array($result))
         {
-            echo "<li>" . $row['type'] . " - " . $row['position'] . "</li>";
+            echo "<li>" . $row['type'] . " - " . $row['position'] . "</li>\n";
         }
-        echo "</ul>";
+        echo "</ul>\n";
         $query = "SELECT orderText, succeeded FROM orders WHERE turnNum = " . ($turn_number - 1) . " AND country = '$country';";
         $result = mysql_query($query, $con);
         if (mysql_num_rows($result) != 0)
         {
-            echo  "<ul><strong>Orders Sent Last Turn</strong>";
+            echo  "<ul><strong>Orders Sent Last Turn</strong>\n";
             while ($row = mysql_fetch_array($result))
             {
                 echo "<li>" . $row['orderText'];
@@ -125,13 +125,13 @@ function show_turn_results($turn_number, $con)
                 {
                     echo " - <strong>ORDER FAILED</strong>";
                 }
-                echo  "</li>";
+                echo  "</li>\n";
             }
-            echo "</ul>";
+            echo "</ul>\n";
         }
         else
         {
-            echo "<p>No orders given for this turn</p>";
+            echo "<p>No orders given for this turn</p>\n";
         }
     }
     show_turn_results($turn_number - 1, $con);
