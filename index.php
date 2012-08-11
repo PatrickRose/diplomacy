@@ -138,67 +138,57 @@ function show_turn_results($turn_number, $con)
     return TRUE;
 }
 
-function set_players($con)
+function set_players(PDO $con)
 {
-    $randomiser = mysql_query("SELECT id FROM email ORDER BY rand()", $con);
-    $assigning = 1;
-    if (!$randomiser)
+    try
     {
-        die("<p>There was a problem with the query, error was</p>" . mysql_error($con));
+        $con->beginTransaction();
+        $assigning = 1;
+        $assign_query = $con->prepare("UPDATE email SET assign=:assigning WHERE id=:id;");
+        $assign_query->bindParam(":assigning", $assigning);
+        $assign_query->bindParam(":id", $id);
+        echo "<p>Setting email assign numbers</p>";
+        foreach($con->query("SELECT id FROM email ORDER BY rand()") as $row)
+        {
+            $id = $row['id'];
+            echo "<p>Setting assign number $assigning</p>";
+            //$query = "UPDATE email SET assign=$assigning WHERE id=".$row['id'].";";
+            $assign_query->execute();
+            $assigning = $assigning + 1;
+        }
+        $assign_query = $con->prepare("SELECT * FROM email WHERE assign = :assigning;");
+        $assign_query->bindParam(":assigning", $assigning);
+        $assigning = 1;
+        $update_query = $con->prepare("UPDATE players SET playing=:playing_email WHERE id=:id;");
+        $update_query->bindParam(":playing_email", $playing_email);
+        $update_query->bindParam(":id", $id);
+        echo "<p>Setting players</p>";
+        foreach($con->query("SELECT * FROM players ORDER BY RAND();") as $row)
+        {
+            $email = $row['email'];
+            $player = $row['name'];
+            $assign_query->execute();
+            $row_email = $assign_query->fetchAll();
+            $playing_email = $row_email['email'];
+            $password = $row_email['password'];
+            //echo "<p>$player, $email, $playing_email, $password</p>";
+            if (do_mailing($email, $player, $playing_email, $password))
+            {
+                echo "<p>Emailed $player</p>";
+            }
+            else
+            {
+                die("<p>Failed to email $player</p>");
+            }
+            $id = $row['id'];
+            $update_query->execute();
+            $assigning = $assigning + 1;
+        }
     }
-    echo "<p>Setting email assign numbers</p>";
-    while($row = mysql_fetch_array($randomiser))
+    catch(PDOException $e)
     {
-        echo "<p>Setting assign number $assigning</p>";
-        $query = "UPDATE email SET assign=$assigning WHERE id=".$row['id'].";";
-        $result = mysql_query($query);
-        if (!$result)
-        {
-            die("<p>There was a problem with the query, query was:</p>" . $query);
-        }
-        $assigning = $assigning + 1;
-    }
-    $query_players =
-        "
-       SELECT *
-       FROM players
-       ORDER BY RAND();
-     ";
-    $result_players = mysql_query($query_players, $con);
-    if (!$result_players)
-    {
-        die("<p>There was a problem with the query, query was:</p>" . $query_players);
-    }
-    $assigning = 1;
-    echo "<p>Setting players</p>";
-    while($row = mysql_fetch_array($result_players))
-    {
-        $email = $row['email'];
-        $player = $row['name'];
-        $query = "SELECT * FROM email WHERE assign = $assigning;";
-        if (!$result = mysql_query($query, $con))
-        {
-            die("<p>There was a problem with the query (line 74), query was:</p>" . $query);
-        }
-        $row_email = mysql_fetch_array($result);
-        $playing_email = $row_email['email'];
-        $password = $row_email['password'];
-//       echo "<p>$player, $email, $playing_email, $password</p>";
-        if (do_mailing($email, $player, $playing_email, $password))
-        {
-            echo "<p>Emailed $player</p>";
-        }
-        else
-        {
-            die("<p>Failed to email $player</p>");
-        }
-        $query = "UPDATE players SET playing='$playing_email' WHERE id=".$row['id'].";";
-        $result = mysql_query($query);
-        if (!$result)
-        {
-            die("<p>There was a problem with the query, query was:</p>" . $query);
-        }
-        $assigning = $assigning + 1;
+        log_error($e->getMessage(), __LINE__);
+        echo "<p id=\"error\">Error attempting to set players</p>";
     }
 }
 
@@ -222,8 +212,8 @@ function do_mailing($email, $player_name, $playing_email, $password)
            Paddy
        ";
     return mail($email, "[Diplomacy] FINAL PASSWORD", $message);
-//       echo "<p>$message</p>";
-//       return TRUE;
+    //echo "<p>$message</p>";
+    //return TRUE;
 }
 
 function create_tables_if_needed(PDO $con)
