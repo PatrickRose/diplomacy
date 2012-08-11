@@ -226,43 +226,30 @@ function do_mailing($email, $player_name, $playing_email, $password)
 //       return TRUE;
 }
 
-function create_tables_if_needed($con)
+function create_tables_if_needed(PDO $con)
 {
-    $query = "CREATE TABLE IF NOT EXISTS email (id INT PRIMARY KEY AUTO_INCREMENT, email VARCHAR(50), password VARCHAR(50), assign INT)";
-    $result = mysql_query($query, $con);
-    if (!$result)
+    try
     {
-        die("<p>There was a problem with the query, query was:</p>" . $query . "<p>Error was: </p>" . mysql_error($con));
+        $con->beginTransaction();
+        $query = "CREATE TABLE IF NOT EXISTS email (id INT PRIMARY KEY AUTO_INCREMENT, email VARCHAR(50), password VARCHAR(50), assign INT)";
+        $con->exec($query);
+        $query = "CREATE TABLE IF NOT EXISTS players (id INT PRIMARY KEY AUTO_INCREMENT, email VARCHAR(50), name VARCHAR(50), playing VARCHAR(50))";
+        $con->exec($query);
+        $query = "CREATE TABLE IF NOT EXISTS orders (id INT PRIMARY KEY AUTO_INCREMENT, country VARCHAR(10), orderText VARCHAR(75), turnNum INT, succeeded tinyint(1) NOT NULL DEFAULT '1');";
+        $con->exec($query);
+        $query = "CREATE TABLE IF NOT EXISTS positions (id INT PRIMARY KEY AUTO_INCREMENT, country VARCHAR(10), type VARCHAR(7), position VARCHAR(20), turnNum INT);";
+        $con->exec($query);
+        $query = "CREATE TABLE IF NOT EXISTS summary (id INT PRIMARY KEY AUTO_INCREMENT, description VARCHAR(255), turnNum INT);";
+        $con->exec($query);
+        $query = "CREATE TABLE IF NOT EXISTS pips (id INT PRIMARY KEY AUTO_INCREMENT, country VARCHAR(10), pipCount INT, turnNum INT);";
+        $con->exec($query);
+        $con->commit();
     }
-    $query = "CREATE TABLE IF NOT EXISTS players (id INT PRIMARY KEY AUTO_INCREMENT, email VARCHAR(50), name VARCHAR(50), playing VARCHAR(50))";
-    $result = mysql_query($query, $con);
-    if (!$result)
+    catch(PDOException $e)
     {
-        die("<p>There was a problem with the query, query was:</p>" . $query . "<p>Error was: </p>" . mysql_error($con));
-    }
-    $query = "CREATE TABLE IF NOT EXISTS orders (id INT PRIMARY KEY AUTO_INCREMENT, country VARCHAR(10), orderText VARCHAR(75), turnNum INT, succeeded tinyint(1) NOT NULL DEFAULT '1');";
-    $result = mysql_query($query, $con);
-    if (!$result)
-    {
-        die("<p>There was a problem with the query, query was:</p>" . $query . "<p>Error was: </p>" . mysql_error($con));
-    }
-    $query = "CREATE TABLE IF NOT EXISTS positions (id INT PRIMARY KEY AUTO_INCREMENT, country VARCHAR(10), type VARCHAR(7), position VARCHAR(20), turnNum INT);";
-    $result = mysql_query($query, $con);
-    if (!$result)
-    {
-        die("<p>There was a problem with the query, query was:</p>" . $query . "<p>Error was: </p>" . mysql_error($con));
-    }
-    $query = "CREATE TABLE IF NOT EXISTS summary (id INT PRIMARY KEY AUTO_INCREMENT, description VARCHAR(255), turnNum INT);";
-    $result = mysql_query($query, $con);
-    if (!$result)
-    {
-        die("<p>There was a problem with the query, query was:</p>" . $query . "<p>Error was: </p>" . mysql_error($con));
-    }
-    $query = "CREATE TABLE IF NOT EXISTS pips (id INT PRIMARY KEY AUTO_INCREMENT, country VARCHAR(10), pipCount INT, turnNum INT);";
-    $result = mysql_query($query, $con);
-    if (!$result)
-    {
-        die("<p>There was a problem with the query, query was:</p>" . $query . "<p>Error was: </p>" . mysql_error($con));
+        log_error($e->getMessage(), __LINE__);
+        echo "<p id=\"error\">Error attempting to create the tables</p>";
+        return null;
     }
 }
 
