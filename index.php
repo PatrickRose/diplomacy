@@ -19,7 +19,6 @@ else
     $turn_number = get_last_turn_number($connection);
     show_header($turn_number);
     show_turn_results($turn_number, $connection);
-    //testing();
 }
 ?>
 </body>
@@ -54,6 +53,7 @@ function show_turn_results($turn_number, $con)
 {
     if ($turn_number == 0)
     {
+        echo "<p>No more turns</p>";
         return true;
     }
     $query = "SELECT description FROM summary WHERE id = $turn_number";
