@@ -40,7 +40,7 @@ function show_header($turn_number)
 
 function get_last_turn_number($con)
 {
-    $query = "SELECT turnNum FROM positions ORDER BY id DESC LIMIT 1";
+    $query = "SELECT turnNum FROM positions ORDER BY turnNum DESC LIMIT 1";
     $result = mysql_query($query, $con);
     if (!$result)
     {
