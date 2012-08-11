@@ -37,16 +37,22 @@ function show_header($turn_number)
     }
 }
 
-function get_last_turn_number($con)
+function get_last_turn_number(PDO $con)
 {
-    $query = "SELECT turnNum FROM positions ORDER BY turnNum DESC LIMIT 1";
-    $result = mysql_query($query, $con);
-    if (!$result)
+    try
     {
-        die("Error on line 39. Error was: " . mysql_query($con));
+
+        $query = "SELECT turnNum FROM positions ORDER BY turnNum DESC LIMIT 1";
+        $result = $con->query($query);
+        $array = $result->fetchAll();
+        return $array['turnNum'];
     }
-    $array = mysql_fetch_array($result);
-    return $array['turnNum'];
+    catch(PDOException $e)
+    {
+        log_error($e->getMessage(), __LINE__);
+        echo "<p id=\"error\">Couldn't get last turn number</p>";
+        return null;
+    }
 }
 
 function show_turn_results($turn_number, $con)
