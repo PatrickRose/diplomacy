@@ -44,7 +44,6 @@ function get_last_turn_number(PDO $con)
         $query = "SELECT turnNum FROM positions ORDER BY turnNum DESC LIMIT 1";
         $result = $con->query($query);
         $array = $result->fetch();
-        echo print_r($array);
         return $array['turnNum'];
     }
     catch(PDOException $e)
@@ -73,7 +72,7 @@ function show_turn_results($turn_number, PDO $con)
         }
         else
         {
-            $array = $query->fetchAll();
+            $array = $query->fetch();
             $summary = $array['description'];
         }
         echo
@@ -114,7 +113,7 @@ function show_turn_results($turn_number, PDO $con)
         $orders_query->bindParam(":country", $country);
         foreach($countries as $country)
         {
-            $array = $pip_query->fetchAll();
+            $array = $pip_query->fetch();
             $pip_count = $array['pipCount'];
             $positions_query->execute();
             $army_count = $positions_query->rowCount();
