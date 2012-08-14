@@ -9,7 +9,7 @@
 include("connect.php");
 $connection = create_connection();
 create_tables_if_needed($connection);//Should also be in admin?
-$not_set = FALSE;
+$not_set = FALSE;//Shouldn't be done here
 if ($not_set)
 {
     set_players($connection);//Should probably be in admin
@@ -68,17 +68,9 @@ function show_turn_results($number_of_turns, PDO $con)
         $positions_query->bindParam(":country", $country);
         $orders_query = $con->prepare("SELECT orderText, succeeded FROM orders WHERE turnNum = :turn_number AND country = :country;");
         $orders_query->bindParam(":turn_number", $previous_turn_number, PDO::PARAM_INT);
-        echo "<p>Working up to " . __LINE__ . "</p>";
         $orders_query->bindParam(":country", $country);
-        echo "<p>Working up to " . __LINE__ . "</p>";
-        $turn_number=$number_of_turns;
-        while($turn_number>0)
+        for($turn_number=$number_of_turns; $turn_number>0; $turn_number--)
         {
-            if ($turn_number == 0)
-            {
-                echo "<p>No more turns</p>";
-                return true;
-            }
             $previous_turn_number=$turn_number-1;
             $summary_query->execute();
             if ($summary_query->rowCount() == 0)
@@ -152,7 +144,8 @@ function show_turn_results($number_of_turns, PDO $con)
             }
             $turn_number--;
         }
-        return TRUE;
+        echo "<p>No more turns</p>";
+        return true;
     }
     catch(PDOException $e)
     {
@@ -176,7 +169,6 @@ function set_players(PDO $con)
         {
             $id = $row['id'];
             echo "<p>Setting assign number $assigning</p>";
-            //$query = "UPDATE email SET assign=$assigning WHERE id=".$row['id'].";";
             $assign_query->execute();
             $assigning = $assigning + 1;
         }
@@ -192,7 +184,7 @@ function set_players(PDO $con)
             $email = $row['email'];
             $player = $row['name'];
             $assign_query->execute();
-            $row_email = $assign_query->fetchAll();
+            $row_email = $assign_query->fetch();
             $playing_email = $row_email['email'];
             $password = $row_email['password'];
             //echo "<p>$player, $email, $playing_email, $password</p>";
@@ -208,9 +200,11 @@ function set_players(PDO $con)
             $update_query->execute();
             $assigning = $assigning + 1;
         }
+        $con->commit();
     }
     catch(PDOException $e)
     {
+        $con->rollBack();
         log_error($e->getMessage(), __LINE__);
         echo "<p id=\"error\">Error attempting to set players</p>";
     }
