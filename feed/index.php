@@ -9,19 +9,21 @@ $rssfeed = '<?xml version="1.0" encoding="ISO-8859-1"?>
                 <description>This is the RSS feed for the game of anon diplomacy that I\'m </description>
                 <language>en-uk</language>
                 <copyright>Copyright (C) 2012 Patrick Rose</copyright>';
-$connection = create_connection();
-$query = "SELECT * FROM summary ORDER BY turnNum DESC";
-foreach($connection->query($query) as $row)
+$con = create_connection();
+$query = "SELECT * FROM summary ORDER BY id DESC";
+foreach($con->query($query) as $row)
 {
-    extract($row);
+    $turnNum = $row['turnNum'];
+    $date = $row['date'];
     $link = 'http://diplomacy.patrickrosemusic.co.uk/#turn' . $turnNum;
     $pubDate = date("D, d M Y H:i:s O", strtotime($date));
+    $description = $row['description'];
     $rssfeed .=
         '<item>
-                <title>Diplomacy Turn $turnNum</title>
-                <description>$description</description>
-                <link>$link</link>
-                <pubDate>$pubDate</pubDate>
+                <title>Diplomacy Turn' . $turnNum . '</title>
+                <description>' . $description . '</description>
+                <link>' . $link . '</link>
+                <pubDate> ' . $pubDate . '</pubDate>
             </item>';
 }
 
