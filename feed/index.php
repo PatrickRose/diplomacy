@@ -13,7 +13,7 @@ $con = create_connection();
 $query = "SELECT * FROM summary ORDER BY id DESC";
 foreach($con->query($query) as $row)
 {
-    $turnNum = $row['turnNum'];
+    $turnNum = $row['id'];
     $date = $row['date'];
     $link = 'http://diplomacy.patrickrosemusic.co.uk/#turn' . $turnNum;
     $pubDate = date("D, d M Y H:i:s O", strtotime($date));
