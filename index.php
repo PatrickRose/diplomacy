@@ -67,19 +67,19 @@ function show_turn_results($number_of_turns, PDO $con)
         $positions_query->bindParam(":turn_number", $turn_number, PDO::PARAM_INT);
         $positions_query->bindParam(":country", $country);
         $orders_query = $con->prepare("SELECT orderText, succeeded FROM orders WHERE turnNum = :turn_number AND country = :country;");
-        $orders_query->bindParam(":turn_number", ($turn_number-1), PDO::PARAM_INT);
+        $orders_query->bindParam(":turn_number", $previous_turn_number, PDO::PARAM_INT);
         echo "<p>Working up to " . __LINE__ . "</p>";
         $orders_query->bindParam(":country", $country);
         echo "<p>Working up to " . __LINE__ . "</p>";
         $turn_number=$number_of_turns;
         while($turn_number>0)
         {
-            echo "Started for loop";
             if ($turn_number == 0)
             {
                 echo "<p>No more turns</p>";
                 return true;
             }
+            $previous_turn_number=$turn_number-1;
             $summary_query->execute();
             if ($summary_query->rowCount() == 0)
             {
