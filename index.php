@@ -54,30 +54,46 @@ function get_last_turn_number(PDO $con)
     }
 }
 
-function show_turn_results($turn_number, PDO $con)
+function show_turn_results($number_of_turns, PDO $con)
 {
-    if ($turn_number == 0)
-    {
-        echo "<p>No more turns</p>";
-        return true;
-    }
     try
     {
-        $query = $con->prepare("SELECT description FROM summary WHERE id = :turn_number");
-        $query->bindParam(":turn_number", $turn_number, PDO::PARAM_INT);
-        $query->execute();
-        if ($query->rowCount() == 0)
+        $summary_query = $con->prepare("SELECT description FROM summary WHERE id = :turn_number");
+        $summary_query->bindParam(":turn_number", $turn_number, PDO::PARAM_INT);
+        $pip_query = $con->prepare("SELECT pipCount FROM pips WHERE turnNum = :turn_number AND country = :country;");
+        $pip_query->bindParam(":turn_number", $turn_number, PDO::PARAM_INT);
+        $pip_query->bindParam(":country", $country);
+        $positions_query = $con->prepare("SELECT * FROM positions WHERE turnNum = :turn_number AND country = :country;");
+        $positions_query->bindParam(":turn_number", $turn_number, PDO::PARAM_INT);
+        $positions_query->bindParam(":country", $country);
+        $orders_query = $con->prepare("SELECT orderText, succeeded FROM orders WHERE turnNum = :turn_number AND country = :country;");
+        $orders_query->bindParam(":turn_number", ($turn_number-1), PDO::PARAM_INT);
+        echo "<p>Working up to " . __LINE__ . "</p>";
+        $orders_query->bindParam(":country", $country);
+        echo "<p>Working up to " . __LINE__ . "</p>";
+        $turn_number=$number_of_turns;
+        while($turn_number>0)
         {
-            $summary = "<p>No summary for this turn yet</p>";
-        }
-        else
-        {
-            $array = $query->fetch();
-            $summary = $array['description'];
-        }
-        echo
-        "
-            <a name=\"turn" . $turn_number ."\" /><h1>Turn $turn_number</h1>
+            echo "Started for loop";
+            if ($turn_number == 0)
+            {
+                echo "<p>No more turns</p>";
+                return true;
+            }
+            $summary_query->execute();
+            if ($summary_query->rowCount() == 0)
+            {
+                $summary = "<p>No summary for this turn yet</p>";
+            }
+            else
+            {
+                $array = $summary_query->fetch();
+                $summary = $array['description'];
+            }
+            echo
+                "
+            <a name=\"turn" . $turn_number ."\"></a>
+            <h1>Turn $turn_number</h1>
             <p>" . str_ireplace("\n", "</p>\n<p>", strip_tags($summary, "<em>")) . "</p>
             <p>The state of the board at the beginning of turn $turn_number is:<p>
             <img src=\"https://dl.dropbox.com/u/2827522/Diplomacy/Turn" . $turn_number . ".png\" alt=\"Turn $turn_number Map\" />
@@ -93,62 +109,55 @@ function show_turn_results($turn_number, PDO $con)
                 <li>Circle: Ship</li>
             </ul>\n
         ";
-        $countries = array(
-            "England",
-            "France",
-            "Germany",
-            "Hungary",
-            "Italy",
-            "Russia",
-            "Turkey"
-        );
-        $pip_query = $con->prepare("SELECT pipCount FROM pips WHERE turnNum = :turn_number AND country = :country;");
-        $pip_query->bindParam(":turn_number", $turn_number, PDO::PARAM_INT);
-        $pip_query->bindParam(":country", $country);
-        $positions_query = $con->prepare("SELECT * FROM positions WHERE turnNum = :turn_number AND country = :country;");
-        $positions_query->bindParam(":turn_number", $turn_number, PDO::PARAM_INT);
-        $positions_query->bindParam(":country", $country);
-        $orders_query = $con->prepare("SELECT orderText, succeeded FROM orders WHERE turnNum = :turn_number AND country = :country;");
-        $orders_query->bindParam(":turn_number", $turn_number-1, PDO::PARAM_INT);
-        $orders_query->bindParam(":country", $country);
-        foreach($countries as $country)
-        {
-            $array = $pip_query->fetch();
-            $pip_count = $array['pipCount'];
-            $positions_query->execute();
-            $army_count = $positions_query->rowCount();
-            echo "<ul><strong>" . strtoupper($country) . " - $army_count armies ($pip_count pips controlled)</strong>\n";
-            foreach($positions_query->fetchAll() as $row)
+            $countries = array(
+                "England",
+                "France",
+                "Germany",
+                "Hungary",
+                "Italy",
+                "Russia",
+                "Turkey"
+            );
+            foreach($countries as $country)
             {
-                echo "<li>" . $row['type'] . " - " . $row['position'] . "</li>\n";
-            }
-            echo "</ul>\n";
-            $orders_query->execute();
-            if ($orders_query->rowCount())
-            {
-                echo  "<ul><strong>Orders Sent Last Turn</strong>\n";
-                foreach ($orders_query->fetchAll() as $row)
+                $array = $pip_query->fetch();
+                $pip_count = $array['pipCount'];
+                $positions_query->execute();
+                $army_count = $positions_query->rowCount();
+                echo "<ul><strong>" . strtoupper($country) . " - $army_count armies ($pip_count pips controlled)</strong>\n";
+                foreach($positions_query->fetchAll() as $row)
                 {
-                    echo "<li>" . $row['orderText'];
-                    if ($row['succeeded'] != 1)
-                    {
-                        echo " - <strong>ORDER FAILED</strong>";
-                    }
-                    echo  "</li>\n";
+                    echo "<li>" . $row['type'] . " - " . $row['position'] . "</li>\n";
                 }
                 echo "</ul>\n";
+                $orders_query->execute();
+                if ($orders_query->rowCount())
+                {
+                    echo  "<ul><strong>Orders Sent Last Turn</strong>\n";
+                    foreach ($orders_query->fetchAll() as $row)
+                    {
+                        echo "<li>" . $row['orderText'];
+                        if ($row['succeeded'] != 1)
+                        {
+                            echo " - <strong>ORDER FAILED</strong>";
+                        }
+                        echo  "</li>\n";
+                    }
+                    echo "</ul>\n";
+                }
+                else
+                {
+                    echo "<p>No orders given for this turn</p>\n";
+                }
             }
-            else
-            {
-                echo "<p>No orders given for this turn</p>\n";
-            }
+            $turn_number--;
         }
-        return show_turn_results($turn_number - 1, $con);
+        return TRUE;
     }
     catch(PDOException $e)
     {
-        log_error($e->getMessage(), __LINE__);
         echo "Unable to select turn info";
+        log_error($e->getMessage(), __LINE__);
         return FALSE;
     }
 }
