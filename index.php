@@ -41,10 +41,10 @@ function get_last_turn_number(PDO $con)
 {
     try
     {
-
         $query = "SELECT turnNum FROM positions ORDER BY turnNum DESC LIMIT 1";
         $result = $con->query($query);
-        $array = $result->fetchAll();
+        $array = $result->fetch();
+        echo print_r($array);
         return $array['turnNum'];
     }
     catch(PDOException $e)
