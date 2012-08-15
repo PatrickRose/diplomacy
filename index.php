@@ -142,7 +142,6 @@ function show_turn_results($number_of_turns, PDO $con)
                     echo "<p>No orders given for this turn</p>\n";
                 }
             }
-            $turn_number--;
         }
         echo "<p>No more turns</p>";
         return true;
