@@ -48,7 +48,7 @@ function get_last_turn_number(PDO $con)
     }
     catch(PDOException $e)
     {
-        log_error($e->getMessage(), __LINE__);
+        log_error($e->getMessage(), $e->getLine());
         echo "<p id=\"error\">Couldn't get last turn number</p>";
         return null;
     }
@@ -112,6 +112,7 @@ function show_turn_results($number_of_turns, PDO $con)
             );
             foreach($countries as $country)
             {
+                $pip_query->execute();
                 $array = $pip_query->fetch();
                 $pip_count = $array['pipCount'];
                 $positions_query->execute();
@@ -149,7 +150,7 @@ function show_turn_results($number_of_turns, PDO $con)
     catch(PDOException $e)
     {
         echo "Unable to select turn info";
-        log_error($e->getMessage(), __LINE__);
+        log_error($e->getMessage(), $e->getLine());
         return FALSE;
     }
 }
@@ -204,7 +205,7 @@ function set_players(PDO $con)
     catch(PDOException $e)
     {
         $con->rollBack();
-        log_error($e->getMessage(), __LINE__);
+        log_error($e->getMessage(), $e->getLine());
         echo "<p id=\"error\">Error attempting to set players</p>";
     }
 }
@@ -250,13 +251,13 @@ function create_tables_if_needed(PDO $con)
         $con->exec($query);
         $query = "CREATE TABLE IF NOT EXISTS pips (id INT PRIMARY KEY AUTO_INCREMENT, country VARCHAR(10), pipCount INT, turnNum INT);";
         $con->exec($query);
-        $con->commit();
+        return $con->commit();
     }
     catch(PDOException $e)
     {
-        log_error($e->getMessage(), __LINE__);
+        log_error($e->getMessage(), $e->getLine());
         echo "<p id=\"error\">Error attempting to create the tables</p>";
-        return null;
+        return false;
     }
 }
 
